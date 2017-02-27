@@ -1,5 +1,5 @@
-from common.decorators import *
-from common.errors import *
+from ..common.decorators import *
+from ..common.errors import *
 from enum import IntEnum
 from decimal import *
 import json
@@ -20,7 +20,6 @@ class ComponentType(IntEnum):
         for name, member in cls.__members__.items():
             if name == u_string:
                 return member
-        print(string)
         raise ComponentError()
 
 
@@ -34,7 +33,7 @@ class DataType(IntEnum):
     VOID = 7
 
     def __str__(self):
-        return 'URI' if self.value == 7 else '{0}'.format(self.name).title()
+        return 'URI' if self == DataType.URI else '{0}'.format(self.name).title()
 
     @classmethod
     def from_string(cls, string):

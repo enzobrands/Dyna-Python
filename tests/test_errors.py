@@ -1,4 +1,4 @@
-from common.errors import *
+from dyna.common.errors import *
 
 def test_SerializationError():
     e = SerializationError(str, 'json')

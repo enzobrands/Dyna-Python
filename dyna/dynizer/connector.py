@@ -1,6 +1,6 @@
-from common.decorators import *
-from common.errors import *
-from dynizer.types import *
+from ..common.decorators import *
+from ..common.errors import *
+from .types import *
 import http.client
 from enum import Enum, IntEnum
 import urllib
