@@ -293,17 +293,16 @@ class Topology:
 
 class InstanceElement:
     def __init__(self, value=None, datatype=None, descriptive_actions=None):
-        self.value = value
-        self.datatype = datatype
+        self.dataelement = DataElement(value=value, datatype=datatype)
         self.descriptive_actions = descriptive_actions
 
     @staticmethod
     def from_dict(dct):
         element = None
         try:
-            element = InstanceElement(DataElement._convertfrom_json(DataType.from_string(dct['datatype']), dct['value']),
-                                      DataType.from_string(dct['datatype']),
-                                      dct['descriptive_actions'])
+            de = DataElement.from_dict(dct)
+            element = InstanceElement(descriptive_actions=dct['descriptive_actions'])
+            element.dataelement = de
         except Exception as e:
             raise DeserializationError(InstanceElement, 'dict', dct) from e
         return element
@@ -311,9 +310,7 @@ class InstanceElement:
     def to_dict(self):
         dct = {}
         try:
-            if self.value is not None:
-                dct['value'] = DataElement._convert_to_json(self.datatype if self.datatype is not None else DataType.STRING, self.value)
-                dct['datatype'] = str(self.datatype) if self.datatype is not None else str(DataType.STRING)
+            dct = self.dataelement.to_dict()
             dct['descriptive_actions'] = [] if self.descriptive_actions is None else self.descriptive_actions
         except Exception as e:
             raise SerializationError(InstanceElement, 'dict') from e
@@ -375,7 +372,7 @@ class Instance:
             if self.timestamp is not None:
                 dct['timstamp'] = str(self.timestamp)
             if self.status is not None:
-                dct['status'] = status
+                dct['status'] = self.status
         except Exception as e:
             raise SerializationError(Topology, 'dict') from e
         return dct
@@ -393,17 +390,16 @@ class Instance:
 
 class InActionQueryValue:
     def __init__(self, value=None, datatype=None, textsearch=False):
-        self.value = value
-        self.datatype = datatype
+        self.dataelement = DataElement(value=value, datatype=datatype)
         self.textsearch = textsearch
 
     @staticmethod
     def from_dict(dct):
         val = None
         try:
-            val = InActionQueryValue(DataElement._convertfrom_json(DataType.from_string(dct['datatype']), dct['value']),
-                                     DataType.from_string(dct['datatype']),
-                                     True if get(dct, 'textsearch', 'false') == 'true' else False)
+            de = DataElement.from_dict(dct)
+            val = InActionQueryValue(textsearch=get(dct, 'textsearch', false))
+            val.dataelement = de
         except Exception as e:
             raise DeserializationError(InstanceElement, 'dict', dct) from e
         return val
@@ -411,11 +407,8 @@ class InActionQueryValue:
     def to_dict(self):
         dct = {}
         try:
-            if self.value is not None:
-                dct['value'] = DataElement._convert_to_json(self.datatype if self.datatype is not None else DataType.STRING, self.value)
-                dct['datatype'] = str(self.datatype) if self.datatype is not None else str(DataType.STRING)
-            if self.textsearch:
-                dct['textsearch'] = 'true'
+            dct = self.dataelement.to_dict()
+            dct['textsearch'] = self.textsearch
         except Exception as e:
             raise SerializationError(InstanceElement, 'dict') from e
         return dct
