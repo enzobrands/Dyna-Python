@@ -139,7 +139,7 @@ class DynizerConnection:
     # Query functions
     def query(self, query, pagination_filter=None):
         f = self.__get_function_handle_for_obj('query', query)
-        return f(obj. pagination_filter)
+        return f(query, pagination_filter)
 
 
 
@@ -253,13 +253,13 @@ class DynizerConnection:
         json = query.to_json()
         if (query.query_results & InActionQueryResult.ACTIONS) == InActionQueryResult.ACTIONS:
             url = DynizerConnection.__build_url_with_arguments(Action, '/data/v1_1/actionquery', None, pagination_filter)
-            actionres = self.__POST(url, json, Action)
+            actionres = self.__POST(url, json, Action, success_code=200)
         if (query.query_results & InActionQueryResult.TOPOLOGIES) == InActionQueryResult.TOPOLOGIES:
             url = DynizerConnection.__build_url_with_arguments(Topology, '/data/v1_1/topologyquery', None, pagination_filter)
-            topologyres = self.__POST(url, json, Topology)
+            topologyres = self.__POST(url, json, Topology, success_code=200)
         if (query.query_results & InActionQueryResult.INSTANCES) == InActionQueryResult.INSTANCES:
             url = DynizerConnection.__build_url_with_arguments(Instance, '/data/v1_1/instancequery', None, pagination_filter)
-            instanceres = self.__POST(url, json, Instance)
+            instanceres = self.__POST(url, json, Instance, success_code=200)
         return (actionres, topologyres, instanceres)
 
 
