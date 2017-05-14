@@ -1,102 +1,11 @@
 from ..common.decorators import *
 from ..common.errors import *
 from .types import *
+from .filters import *
 import http.client
 from enum import Enum, IntEnum
 import urllib
 import re
-
-
-class FilterOperator(Enum):
-    EQ = 1
-    LT = 2
-    LTEQ = 3
-    GT = 4
-    GTEQ = 5
-    NEQ = 6
-    TSRCH = 7
-
-    @staticmethod
-    @static_func_vars(trmap={
-        1: '=',
-        2: '<',
-        3: '<=',
-        4: '>',
-        5: '>=',
-        6: '!=',
-        7: '~='
-    })
-    def __to_str(v):
-        return FilterOperator.__to_str.trmap[int(v)]
-
-    def __str__(self):
-        return FilterOperator.__to_str(self.value)
-
-    def to_url_operator(self):
-        if self.value == FilterOperator.EQ.value:
-            return ''
-        else:
-            return FilterOperator.__to_str(self.value)
-
-    @classmethod
-    @static_func_vars(trmap={
-        '=': 'EQ',
-        '<': 'LT',
-        '<=': 'LTEQ',
-        '>': 'GT',
-        '>=': 'GTEQ',
-        '!=': 'NEQ',
-        '~=': 'TSRCH'
-    })
-    def from_string(cls, string):
-        op_name = FilterOperators.from_string.trmap[string]
-        for name, member in cls.__member__.items():
-            if name == op_name:
-                return member
-        raise TranslateError(FilterOperators, string)
-
-
-
-
-class Filter:
-    def __init__(self):
-        pass
-
-    def compose_filter(self, cls):
-        pass
-
-class FieldFilter(Filter):
-    def __init__(self, field, op, value):
-        self.field = field
-        self.op = op
-        self.value = value
-
-    def compose_filter(self, cls):
-        FieldFilter.__validate_field(cls, self.field)
-        # Exception for components filter on Topology class
-        if cls.__name__ == Topology.__name__ and self.field == 'components':
-            return "{0}={1}'{2}'".format(self.field, self.op.to_url_operator(), self.value)
-        else:
-            return '{0}={1}{2}'.format(self.field, self.op.to_url_operator(), urllib.parse.quote(self.value))
-
-    @staticmethod
-    def __validate_field(cls, field):
-        if not cls._can_filter_on(field):
-            raise FilterError(cls, field)
-
-class PaginationFilter(Filter):
-    def __init__(self, offset, limit):
-        self.offset = offset
-        self.limit = limit
-
-    def compose_filter(self, cls):
-        return 'offset={0}&limit={1}'.format(self.offset, self.limit)
-
-
-
-
-
-
 
 
 class DynizerConnection:
