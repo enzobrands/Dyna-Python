@@ -22,6 +22,10 @@ class DynizerConnection:
         f = self.__get_function_handle_for_obj('create', obj)
         return f(obj)
 
+    def batch_create(self, obj_arr):
+        f = self.__get_function_handle_for_obj('batch_create', obj[0])
+        return f(obj_arr)
+
     def read(self, obj):
         f = self.__get_function_handle_for_obj('read', obj)
         return f(obj)
@@ -141,6 +145,9 @@ class DynizerConnection:
 
     def __create_Instance(self, obj):
         return self.__POST('/data/v1_1/instances', obj.to_json(), Instance)
+
+    def __batch_create_Instance(self, obj_arr):
+        return self.__POST('/data/v1_1/instances', obj_arr.to_json(), Instance)
 
     def __read_Instance(self, obj):
         return self.__GET('/data/v1_1/instances/{0}'.format(obj.id), Instance)
