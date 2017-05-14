@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 
+import sys
 from distutils.core import setup
+
+if sys.version_info < (3,6):
+    sys.exit('Sorry, Python < 3.6 is not supported')
 
 setup(name='Dynizer',
       version='0.1',
