@@ -62,7 +62,7 @@ class CorrelationQueryResult(IntEnum):
 
 
 class CorrelationQuery:
-    def __init__(self, elements=None, query_results=CorrelationQueryResult.INSTANCES):
+    def __init__(self, elements=None, query_results=CorrelationQueryResult.INSTANCE):
         self.elements = elements
         self.query_results = query_results
 
@@ -70,7 +70,7 @@ class CorrelationQuery:
     def from_dict(dct):
         retval = None
         try:
-            if type(dct).__name__ == 'list'
+            if type(dct).__name__ == 'list':
                 retval = []
                 for d in dct:
                     retval.append(CorrelationQuery.from_dct(d))
