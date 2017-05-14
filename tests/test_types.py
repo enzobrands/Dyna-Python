@@ -1,4 +1,5 @@
 from dyna.dynizer.types import *
+from dyna.common.errors import *
 import pytest
 
 def test_ComponentType():
