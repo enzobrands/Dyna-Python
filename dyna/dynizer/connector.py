@@ -23,7 +23,7 @@ class DynizerConnection:
         return f(obj)
 
     def batch_create(self, obj_arr):
-        f = self.__get_function_handle_for_obj('batch_create', obj[0])
+        f = self.__get_function_handle_for_obj('batch_create', obj_arr[0])
         return f(obj_arr)
 
     def read(self, obj):
@@ -71,7 +71,7 @@ class DynizerConnection:
         try:
             func = getattr(self, func_name)
         except Exception as e:
-            raise DispatchError(obj, op) from e
+            raise DispatchError(obj, func_name) from e
         return func
 
 
@@ -112,7 +112,7 @@ class DynizerConnection:
         return self.__POST('/data/v1_1/actions', obj.to_json(), Action)
 
     def __read_Action(self, obj):
-        return self.__GET('/data/v1_1/actions/{0}'.format(obj.id), Action)
+        return self.__GET('/data/v1_1/actions/{0}'.format('' if obj.id is None else obj.id), Action)
 
     def __list_Actions(self, field_filters, pagination_filter):
         url = DynizerConnection.__build_url_with_arguments(Action, '/data/v1_1/actions', field_filters, pagination_filter)
@@ -122,7 +122,7 @@ class DynizerConnection:
         return self.__POST('/data/v1_1/topologies', obj.to_json(), Topology)
 
     def __read_Topology(self, obj):
-        return self.__GET('/data/v1_1/topologies/{0}'.format(obj.id), Topology)
+        return self.__GET('/data/v1_1/topologies/{0}'.format('' if obj.id is None else obj.id), Topology)
 
     def __list_Topologies(self, field_filters, pagination_filter):
         url = DynizerConnection.__build_url_with_arguments(Topology, '/data/v1_1/topologies', field_filters, pagination_filter)
@@ -140,17 +140,18 @@ class DynizerConnection:
                                 include_labels=True,
                                 include_constraining=True,
                                 include_applying=True)
-        return self.__patch('/data/v1_1/actions/{0}/topologies/{1}'.format(action.id, topology.id), data, Topology)
+        return self.__patch('/data/v1_1/actions/{0}/topologies/{1}'.format(action.id, '' if topology.id is None else topology.id), data, Topology)
 
 
     def __create_Instance(self, obj):
         return self.__POST('/data/v1_1/instances', obj.to_json(), Instance)
 
     def __batch_create_Instance(self, obj_arr):
-        return self.__POST('/data/v1_1/instances', obj_arr.to_json(), Instance)
+        json_arr = list(map(lambda x: x.to_json(), obj_arr))
+        return self.__POST('/data/v1_1/instances', '[' + ','.join(json_arr) + ']', Instance)
 
     def __read_Instance(self, obj):
-        return self.__GET('/data/v1_1/instances/{0}'.format(obj.id), Instance)
+        return self.__GET('/data/v1_1/instances/{0}'.format('' if obj.id is None else obj.id), Instance)
 
     def __update_Instance(self, obj):
         return self.__PUT('/data/v1_1/instances/{0}'.format(obj.id), obj.to_json(), Instance)

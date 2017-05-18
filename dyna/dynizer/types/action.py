@@ -4,7 +4,7 @@ import json
 
 @valid_field_filters('id', 'name', 'actiontype')
 class Action:
-    def __init__(self, id=None, name=None, actiontype=None):
+    def __init__(self, id=None, name=None, actiontype='User'):
         self.id = id
         self.name = name
         self.actiontype = actiontype
