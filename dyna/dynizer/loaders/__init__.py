@@ -1,1 +1,3 @@
-from .xml_loader import XMLExtractionElement, XMLMapping, XMLLoader
+from .xml_loader import XMLAbstractElement, XMLFixedElement, XMLVariableElement, XMLExtractionElement
+from .xml_loader import XMLLoopVariable, XMLMapping, XMLLoader
+
