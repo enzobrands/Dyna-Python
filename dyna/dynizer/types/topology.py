@@ -1,5 +1,6 @@
 from ...common.decorators import *
 from ...common.errors import *
+from .component_type import ComponentType
 import json
 
 @valid_field_filters('id', 'components')

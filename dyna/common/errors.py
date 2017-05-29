@@ -13,7 +13,7 @@ class SerializationError(DynaError):
         message -- explanation of the error
     """
 
-    def __init__(self, type, format, message="Serialization Error"):
+    def __init__(self, type, format: str, message="Serialization Error"):
         self.type = type
         self.format = format
         self.message = '{0}: Type: {1} Format: {2}'.format(message, type.__name__, format)
@@ -30,7 +30,7 @@ class DeserializationError(DynaError):
         message -- explanation of the error
     """
 
-    def __init__(self, type, format, data, message="Deserialization Error"):
+    def __init__(self, type, format: str, data, message="Deserialization Error"):
         self.type = type
         self.format = format
         self.data = data
@@ -85,5 +85,11 @@ class ResponseError(DynaError):
     """Exception raised when the returned result is not as expected"""
     def __init__(self, message="Response Error"):
         self.message = message
+
+class LoaderError(DynaError):
+    """Exception raised when a loader encounters an error"""
+    def __init__(self, loader, message="Loader Error"):
+        self.loader = loader
+        self.message = '{0}: Type: {1}'.format(message, loader.__name__)
 
 

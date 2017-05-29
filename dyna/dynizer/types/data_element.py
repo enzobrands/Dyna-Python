@@ -10,7 +10,7 @@ class DataElement:
     def __init__(self, id=None, value=None, datatype=None):
         self.id = id
         self.value = DataElement._format_input_value(datatype, value)
-        self.datatype = datatype
+        self.datatype = DataType.VOID if datatype is None else datatype
 
 
     @staticmethod
