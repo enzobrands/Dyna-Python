@@ -3,3 +3,8 @@ __pycache__
 
 cov_annotate
 .coverage
+
+# No certificates
+.key
+.crt
+.p12

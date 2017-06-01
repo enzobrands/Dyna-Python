@@ -6,6 +6,37 @@ import xml.etree.ElementTree as ET
 import itertools
 
 class XMLAbstractElement:
+    """
+    Abstract XML element
+
+    This class represents an abstract XML element, that can be use to build up
+    Dynizer instance data.
+
+    Member Variables
+    ----------------
+    value : any
+        The actual value of the xml element
+
+    data_type : DataType
+        The Dynizer data type of the xml element
+
+    component : ComponentType
+        The Dynizer component type of the xml element
+
+    label : str
+        The label for the xml element
+
+    Member Functions
+    ----------------
+    fetch_from_entity
+        Should be overwritten in concrete elements that fetch the value from the
+        parsed xml file
+
+    apply_ariables
+        Should be overwritten in concrete elements that retrieve the value from
+        previously parsed variables out of the xml file
+
+    """
     def __init__(self, value,
                        data_type: DataType,
                        component: ComponentType,
@@ -27,6 +58,13 @@ class XMLAbstractElement:
 
 
 class XMLFixedElement(XMLAbstractElement):
+    """
+    Fixed element
+
+    This class represents a Fixed element, that can be use to build up
+    Dynizer instance data. A Fixed element acts like a constant and will always
+    represent the same value. It can not be altered once provided.
+    """
     def __init__(self, value,
                        data_type: DataType,
                        component: ComponentType,
@@ -36,6 +74,21 @@ class XMLFixedElement(XMLAbstractElement):
 
 
 class XMLVariableElement(XMLAbstractElement):
+    """
+    Variable element
+
+    This class represents a Variable element. Variable elements are assigned
+    a value based upon a combination of LoopVariables, which have been fetched
+    in a pre-parsing loop of the xml file. A full combinatoric off all loop variables
+    are created and provided to the variable elements. Based upon the loop_index and
+    variable_index the correct element is assigned to the variable element.
+
+    The loop index specifies the loopvariable to access in the combinatorics matrix.
+    Since each loop variable can have multiple subvariable references, the variable_index
+    refers to the sub-index within the loopvariable.
+
+    See the XmlLoopVariable class for more information
+    """
     def __init__(self, loop_index: int,
                        variable_index: int,
                        data_type: DataType,
@@ -145,9 +198,11 @@ class XMLLoader:
     def add_mapping(self, mapping: XMLMapping):
         self.elements.append(mapping)
 
-    def run(self, connection: DynizerConnection, batch_size=100):
+    def run(self, connection: DynizerConnection):
+        connection.connect()
         for mapping in self.mappings:
             self.__run_mapping(connection, mapping)
+        connection.close()
 
 
     def __expand_variables(self, root, mapping, variable):
