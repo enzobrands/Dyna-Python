@@ -46,7 +46,7 @@ class XMLAbstractElement:
         self.component = component
         self.label = label
 
-    def fetch_from_entity(self, entity, components, data, labels):
+    def fetch_from_entity(self, entity, components, data, labels, ns):
         components.append(self.component)
         data.append(InstanceElement(value=self.value, datatype=self.data_type))
         labels.append(self.label)
@@ -124,8 +124,8 @@ class XMLExtractionElement(XMLAbstractElement):
         self.allow_void = allow_void
         self.transform_funcs = transform_funcs
 
-    def fetch_from_entity(self, entity, components, data, labels):
-        node = entity.findall(self.path)
+    def fetch_from_entity(self, entity, components, data, labels, ns):
+        node = entity.findall(self.path, ns)
         if len(node) == 0:
             if self.required:
                 if self.default is not None:
@@ -183,13 +183,15 @@ class XMLMapping:
 
 class XMLLoader:
     def __init__(self, root_node: ET.Element,
-                       mappings: Sequence[XMLMapping] = []):
+                       mappings: Sequence[XMLMapping] = [],
+                       namespaces={}):
         self.root_node = root_node
         self.mappings = mappings
+        self.ns = namespaces
 
     @classmethod
-    def parse(cls, xml_file: str):
-        return cls(ET.parse(xml_file).getroot())
+    def parse(cls, xml_file: str, mappings: Sequence[XMLMapping] = [], namespaces={}):
+        return cls(ET.parse(xml_file).getroot(), mappings, namespaces)
 
     @classmethod
     def fromstring(cls, xml_string: str):
@@ -206,12 +208,12 @@ class XMLLoader:
 
 
     def __expand_variables(self, root, mapping, variable):
-        elements = root.findall(variable.path)
+        elements = root.findall(variable.path, self.ns)
         values = []
         for elem in elements:
             v_values = []
             for v_path in variable.variable_path:
-                var_elem = elem.findall(v_path)
+                var_elem = elem.findall(v_path, self.ns)
                 v_values.append(list(map(lambda x: x.text, var_elem)))
             values = values + list(itertools.product(*v_values))
         mapping.expanded_variables.append(values)
@@ -260,7 +262,7 @@ class XMLLoader:
                                    root_path: str,
                                    action_obj, topology_map, loadlist):
         # Fetch the root node
-        root = self.root_node.findall(root_path)
+        root = self.root_node.findall(root_path, self.ns)
         if len(root) == 0:
             raise LoaderError(XMLLoader, "Invalid xpath specified for root path: '{0}'".format(root_path))
 
@@ -290,7 +292,7 @@ class XMLLoader:
 
         # Loop over all elements and fetch them fro mthe entity
         for element in elements:
-            if element.fetch_from_entity(entity, components, data, labels) == False:
+            if element.fetch_from_entity(entity, components, data, labels, self.ns) == False:
                 return False
 
         if len(components) < 2:
