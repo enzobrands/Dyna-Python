@@ -9,13 +9,44 @@ import re
 
 
 class DynizerConnection:
-    def __init__(self, address, port=80, endpoint_prefix='/api'):
-        self.dynizer_address = '{0}:{1}'.format(address,port)
-        self.endpoint_prefix = endpoint_prefix
+    def __init__(self, address, port=None, endpoint_prefix=None, https=False, key_file=None, cert_file=None, username=None, password=None):
+        self.dynizer_address = address
+        if port == None:
+            self.dynizer_port = 80 if https == False else 443
+        else:
+            self.dynizer_port = port
+        self.endpoint_prefix = '' if endpoint_prefix is None else endpoint_prefix
+        self.https = https
+        self.key_file = key_file
+        self.cert_file = cert_file
         self._headers = {
             'cache-control': 'no-cache',
             'content-type': 'application/json'
         }
+        self.connection = None
+
+    def __del__(self):
+        self.close()
+
+    def connect(self, reconnect=False):
+        if not self.connection is None:
+            if not reconnect:
+                return
+            else:
+                self.close()
+
+        if self.https:
+            self.connection = http.client.HTTPSConnection(self.dynizer_address, self.dynizer_port, key_file=self.key_file, cert_file=self.cert_file)
+        else:
+            self.connection = http.client.HTTPConnection(self.dynizer_address, self.dynizer_port)
+
+
+    def close(self):
+        if not self.connection is None:
+            self.connection.close()
+            self.connection = None
+
+
 
     # Functions that operate on partially of fully populated objects
     def create(self, obj):
@@ -198,17 +229,18 @@ class DynizerConnection:
 
 
     def __REQUEST(self, verb, endpoint, payload=None, result_obj=None, success_code=200):
-        conn = http.client.HTTPConnection(self.dynizer_address)
+        if self.connection is None:
+            raise ConnectionError('Not connected to dynizer. Please issue a connect() call first')
+
         url = '{0}{1}'.format(self.endpoint_prefix, endpoint)
         response = None
         try:
             if payload is not None:
-                conn.request(verb, url, body=payload, headers=self._headers)
+                self.connection.request(verb, url, body=payload, headers=self._headers)
             else:
-                conn.request(verb, url, headers=self._headers)
-            response = conn.getresponse()
+                self.connection.request(verb, url, headers=self._headers)
+            response = self.connection.getresponse()
         except Exception as e:
-            conn.close()
             raise ConnectionError() from e
 
         if response.status != success_code:
@@ -222,10 +254,6 @@ class DynizerConnection:
                 result = result_obj.from_json(json_string)
             except Exception as e:
                 raise ResponseError() from e
-                conn.close()
 
-        conn.close()
         return result
-
-
 
