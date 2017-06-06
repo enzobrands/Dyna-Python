@@ -246,6 +246,7 @@ class DynizerConnection:
         if response.status != success_code:
             raise RequestError(response.status, response.reason)
 
+
         result = None
         if result_obj is not None:
             try:

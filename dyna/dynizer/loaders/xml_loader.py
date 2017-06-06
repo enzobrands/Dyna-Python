@@ -158,6 +158,62 @@ class XMLExtractionElement(XMLAbstractElement):
         return True
 
 
+class XMLStringCombinationElement(XMLAbstractElement):
+    def __init__(self, paths: Sequence[str],
+                 component: ComponentType,
+                 label = '',
+                 combinator_func = None,
+                 required = True,
+                 sequence_join_char = ','):
+        super().__init__(None, DataType.STRING, component, label)
+        self.paths = paths
+        self.combinator_func = combinator_func
+        self.required = required
+
+    def fetch_from_entity(self, entity, components, data, labels, ns):
+        tmp_data=[]
+        missing_data = False
+        for path in self.paths:
+            node = entity.findall(path, ns)
+            data = ''
+            if len(node) == 1:
+                data = node[0].text
+            elif len(node) > 1:
+                arr = []
+                for n in node:
+                    arr.append(n.text)
+                data = sequence_join_char.join(arr)
+
+            tmp_data.append(data)
+
+        if len(tmp_data) == 0:
+            if not self.required:
+                return True
+            else:
+                data.append(InstanceElement())
+        else:
+            if self.combinator_func is not None:
+                data.append(InstanceElement(value=self.combinator_func(tmp_data), datatype=DataType.STRING))
+            else:
+                data.append(InstanceElement(value=self._default_combinator(tmp_data), datatype=DataType.STRING))
+
+        components.append(self.component)
+        labels.append(self.label)
+
+        return True
+
+
+    def _default_combinator(self, tmp_data):
+        result = '';
+        for elem in tmp_data:
+            if len(elem) > 0:
+                if len(result) == 0:
+                    result = '{0}'.format(result, elem)
+                else:
+                    result = '{0} {1}'.format(result, elem)
+        return result
+
+
 
 class XMLLoopVariable:
     def __init__(self, path: str, variable_path: Sequence[str]):
@@ -200,11 +256,13 @@ class XMLLoader:
     def add_mapping(self, mapping: XMLMapping):
         self.elements.append(mapping)
 
-    def run(self, connection: DynizerConnection):
-        connection.connect()
+    def run(self, connection: DynizerConnection, debug=False):
+        if connection is not None:
+            connection.connect()
         for mapping in self.mappings:
-            self.__run_mapping(connection, mapping)
-        connection.close()
+            self.__run_mapping(connection, mapping, debug)
+        if connection is not None:
+            connection.close()
 
 
     def __expand_variables(self, root, mapping, variable):
@@ -220,21 +278,23 @@ class XMLLoader:
 
 
     def __run_mapping(self, connection: DynizerConnection,
-                            mapping: XMLMapping):
+                            mapping: XMLMapping,
+                            debug):
 
         print('Creating instances for: {0}'.format( mapping.action.name))
         action_obj = None
-        try:
-            action_obj = connection.create(mapping.action)
-        except Exception as e:
-            raise LoaderError(XMLLoader, "Failed to create required action: '{0}'".format(mapping.action))
+        if connection is not None:
+            try:
+                action_obj = connection.create(mapping.action)
+            except Exception as e:
+                raise LoaderError(XMLLoader, "Failed to create required action: '{0}'".format(mapping.action))
 
         topology_map = {}
         loadlist = []
 
         if len(mapping.variables) == 0:
             # No loopvariables are present
-            self.__run_simple_mapping(connection, mapping, mapping.root_path, action_obj, topology_map, loadlist)
+            self.__run_simple_mapping(connection, mapping, mapping.root_path, action_obj, topology_map, loadlist, debug)
         else:
             # We have loop variables, resolve them
             for variable in mapping.variables:
@@ -251,7 +311,7 @@ class XMLLoader:
                 for elem in mapping.fallback:
                     elem.apply_variables(combination)
 
-                self.__run_simple_mapping(connection, mapping, current_root, action_obj, topology_map, loadlist)
+                self.__run_simple_mapping(connection, mapping, current_root, action_obj, topology_map, loadlist, debug)
 
         if len(loadlist) > 0:
             self.__push_batch(connection, loadlist)
@@ -260,17 +320,24 @@ class XMLLoader:
     def __run_simple_mapping(self, connection: DynizerConnection,
                                    mapping: XMLMapping,
                                    root_path: str,
-                                   action_obj, topology_map, loadlist):
+                                   action_obj, topology_map, loadlist,
+                                   debug):
         # Fetch the root node
-        root = self.root_node.findall(root_path, self.ns)
+        root = None
+
+        try:
+            root = self.root_node.findall(root_path, self.ns)
+        except Exception as e:
+            print(root_path)
+            raise e
         if len(root) == 0:
             raise LoaderError(XMLLoader, "Invalid xpath specified for root path: '{0}'".format(root_path))
 
         # Loop over all entities in the root node and parse the entities
         for entity in root:
-            status = self.__run_mapping_on_entity(entity, topology_map, loadlist, action_obj, connection, mapping)
+            status = self.__run_mapping_on_entity(entity, topology_map, loadlist, action_obj, connection, mapping, debug = debug)
             if not status:
-                self.__run_mapping_on_entity(entity, topology_map, loadlist, action_obj, connection, mapping, fallback=True)
+                self.__run_mapping_on_entity(entity, topology_map, loadlist, action_obj, connection, mapping, fallback=True, debug = debug)
 
 
         if len(loadlist) >= mapping.batch_size:
@@ -282,7 +349,8 @@ class XMLLoader:
                                       action_obj: Action,
                                       connection: DynizerConnection,
                                       mapping: XMLMapping,
-                                      fallback = False):
+                                      fallback = False,
+                                      debug = False):
         components = []
         data = []
         labels = []
@@ -297,6 +365,15 @@ class XMLLoader:
 
         if len(components) < 2:
             return False
+
+        if debug:
+            inst = Instance(action_id=0, topology_id=0, data=data)
+            print(inst.to_json())
+
+
+
+        if connection is None:
+            return True
 
         # Build the topology
         top_map_key = ','.join(map(str, components))
@@ -317,7 +394,7 @@ class XMLLoader:
             try:
                 connection.link_actiontopology(action_obj, topology_obj)
             except Exception as e:
-                raise LoaderError(XMLLoader, "Failed to link action and topology")
+                print("Failed to link action and topology.")
 
             topology_map[top_map_key] = topology_obj
 
@@ -330,10 +407,11 @@ class XMLLoader:
 
     def __push_batch(self, connection: DynizerConnection,
                            batch: Sequence[Instance]):
-        print("Writing batch ...")
-        try:
-            connection.batch_create(batch)
-            batch.clear()
-        except Exception as e:
-            raise LoaderError(XMLLoader, "Failed to push batch of instances")
+        if connection is not None:
+            print("Writing batch ...")
+            try:
+                connection.batch_create(batch)
+                batch.clear()
+            except Exception as e:
+                raise LoaderError(XMLLoader, "Failed to push batch of instances")
 
