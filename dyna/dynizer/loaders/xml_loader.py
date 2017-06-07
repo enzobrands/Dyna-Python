@@ -172,7 +172,6 @@ class XMLStringCombinationElement(XMLAbstractElement):
 
     def fetch_from_entity(self, entity, components, data, labels, ns):
         tmp_data=[]
-        missing_data = False
         for path in self.paths:
             node = entity.findall(path, ns)
             data = ''
@@ -186,16 +185,27 @@ class XMLStringCombinationElement(XMLAbstractElement):
 
             tmp_data.append(data)
 
+        """
         if len(tmp_data) == 0:
             if not self.required:
                 return True
             else:
                 data.append(InstanceElement())
         else:
+
             if self.combinator_func is not None:
                 data.append(InstanceElement(value=self.combinator_func(tmp_data), datatype=DataType.STRING))
             else:
                 data.append(InstanceElement(value=self._default_combinator(tmp_data), datatype=DataType.STRING))
+        """
+        value = self.combinator_func(tmp_data) if self.combinator_func is not None else self._default_combinator(tmp_data)
+        if len(value) == 0:
+            if self.required:
+                data.append(InstanceElement())
+            else:
+                return False
+        else:
+            data.append(InstanceElement(value=value, datatype=DataType.STRING))
 
         components.append(self.component)
         labels.append(self.label)
@@ -257,12 +267,17 @@ class XMLLoader:
         self.elements.append(mapping)
 
     def run(self, connection: DynizerConnection, debug=False):
-        if connection is not None:
-            connection.connect()
-        for mapping in self.mappings:
-            self.__run_mapping(connection, mapping, debug)
-        if connection is not None:
-            connection.close()
+        try:
+            if connection is not None:
+                connection.connect()
+            for mapping in self.mappings:
+                self.__run_mapping(connection, mapping, debug)
+            if connection is not None:
+                connection.close()
+        except Exception as e:
+            if connection is not None:
+                connection.close()
+            raise e
 
 
     def __expand_variables(self, root, mapping, variable):
