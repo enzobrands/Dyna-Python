@@ -70,6 +70,8 @@ class DynizerConnection:
         return f(obj)
 
     def link_actiontopology(self, action, topology, labels=None):
+        if labels:
+            topology.labels = labels
         return self.__link_ActionTopology(action, topology)
 
     def update_actiontopology(self, action, topology):
