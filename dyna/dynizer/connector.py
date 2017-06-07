@@ -243,9 +243,11 @@ class DynizerConnection:
                 self.connection.request(verb, url, headers=self._headers)
             response = self.connection.getresponse()
         except Exception as e:
+            self.connect(True)
             raise ConnectionError() from e
 
         if response.status != success_code:
+            self.connect(True)
             raise RequestError(response.status, response.reason)
 
 
@@ -256,6 +258,7 @@ class DynizerConnection:
                 json_string = bytestr.decode(response.headers.get_content_charset('utf-8'))
                 result = result_obj.from_json(json_string)
             except Exception as e:
+                self.connect(True)
                 raise ResponseError() from e
 
         return result
