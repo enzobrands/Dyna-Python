@@ -269,13 +269,16 @@ class XMLLoader:
     def run(self, connection: DynizerConnection, debug=False):
         try:
             if connection is not None:
+                print('CONNECT')
                 connection.connect()
             for mapping in self.mappings:
                 self.__run_mapping(connection, mapping, debug)
             if connection is not None:
+                print('CLOSE')
                 connection.close()
         except Exception as e:
             if connection is not None:
+                print('CLOSE')
                 connection.close()
             raise e
 
@@ -300,6 +303,7 @@ class XMLLoader:
         action_obj = None
         if connection is not None:
             try:
+                print('CREATE ACTION')
                 action_obj = connection.create(mapping.action)
             except Exception as e:
                 raise LoaderError(XMLLoader, "Failed to create required action: '{0}'".format(mapping.action))
@@ -400,6 +404,7 @@ class XMLLoader:
             if topology_obj is None:
                 try:
                     topology = Topology(components=components, labels=labels)
+                    print('CREATE TOPOLOGY')
                     topology_obj = connection.create(topology)
                     topology_obj.labels = labels
                 except Exception as e:
@@ -407,6 +412,7 @@ class XMLLoader:
 
             # Also make sure it is linked to the action
             try:
+                print('LINK TOPOLOGY')
                 connection.link_actiontopology(action_obj, topology_obj)
             except Exception as e:
                 print("Failed to link action and topology.")
@@ -425,6 +431,7 @@ class XMLLoader:
         if connection is not None:
             print("Writing batch ...")
             try:
+                PRINT('BATCH')
                 connection.batch_create(batch)
                 batch.clear()
             except Exception as e:
