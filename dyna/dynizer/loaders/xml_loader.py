@@ -98,7 +98,7 @@ class XMLVariableElement(XMLAbstractElement):
         super().__init__(None, data_type, component, label)
         self.loop_index = loop_index
         self.variable_index = variable_index
-        self.transform_funcs = transform_funcs
+        self.transform_funcs = list(transform_funcs)
 
 
     def apply_variables(self, combination):
@@ -122,7 +122,7 @@ class XMLExtractionElement(XMLAbstractElement):
         self.required = required
         self.default = default
         self.allow_void = allow_void
-        self.transform_funcs = transform_funcs
+        self.transform_funcs = list(transform_funcs)
 
     def fetch_from_entity(self, entity, components, data, labels, ns):
         node = entity.findall(self.path, ns)
@@ -242,7 +242,7 @@ class XMLMapping:
         self.root_path = root_path
         self.variables = variables
         self.elements = elements
-        self.fallback = fallback
+        self.fallback = list(fallback)
         self.expanded_variables = []
         self.batch_size = batch_size
 
@@ -252,7 +252,7 @@ class XMLLoader:
                        mappings: Sequence[XMLMapping] = [],
                        namespaces={}):
         self.root_node = root_node
-        self.mappings = mappings
+        self.mappings = list(mappings)
         self.ns = namespaces
 
     @classmethod

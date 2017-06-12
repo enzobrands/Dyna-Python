@@ -1,5 +1,7 @@
+from ..types import *
 from ...common.errors import *
 from .filter import Filter
+import urllib
 
 class FieldFilter(Filter):
     def __init__(self, field, op, value):
