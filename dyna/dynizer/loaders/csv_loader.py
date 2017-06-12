@@ -46,8 +46,8 @@ class CSVRowElement(CSVAbstractElement):
         self.required = required
         self.default = default
         self.allow_void = allow_void
-        self.transform_funcs = transform_funcs
-        self.na_list = na_list
+        self.transform_funcs = list(transform_funcs)
+        self.na_list = list(na_list)
 
     def fetch_from_row(self, row, components, data, labels):
         if len(row) <= self.index:
@@ -128,7 +128,7 @@ class CSVMapping:
                        batch_size = 100):
         self.action = action
         self.elements = elements
-        self.fallback = fallback
+        self.fallback = list(fallback)
         self.batch_size = batch_size
 
 
@@ -145,8 +145,10 @@ class CSVLoader:
                        quoting=csv.QUOTE_MINIMAL,
                        skipinitialspace=False,
                        strict=False):
+        print("INIT !!!")
+        print(mappings)
         self.csv_path = csv_path
-        self.mappings = mappings
+        self.mappings = list(mappings)
         self.header_count = header_count
         self.delimiter = delimiter
         self.doublequote = doublequote
@@ -156,9 +158,10 @@ class CSVLoader:
         self.quoting = quoting
         self.skipinitialspace = skipinitialspace
         self.strict = strict
+        print(self.mappings)
 
     def add_mapping(self, mapping: CSVMapping):
-        self.elements.append(mapping)
+        self.mappings.append(mapping)
 
     def run(self, connection: DynizerConnection, debug=False):
         try:
