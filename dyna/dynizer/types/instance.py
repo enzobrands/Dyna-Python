@@ -1,6 +1,7 @@
 from ...common.decorators import *
 from ...common.errors import *
 from .instance_element import InstanceElement
+from .topology import Topology
 import json
 import dateutil.parser
 
