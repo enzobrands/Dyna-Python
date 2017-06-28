@@ -64,7 +64,7 @@ class DynizerConnection:
         f = self.__get_function_handle_for_obj('read', obj)
         return f(obj)
 
-    def udate(self, obj):
+    def update(self, obj):
         f = self.__get_function_handle_for_obj('update', obj)
         return f(obj)
 
