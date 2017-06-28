@@ -279,6 +279,9 @@ class DynizerConnection:
             raise ConnectionError() from e
 
         if response.status != success_code:
+            print('{0} {1}'.format(verb, url))
+            if not payload is None:
+                print(payload)
             self.connect(True)
             raise RequestError(response.status, response.reason)
 
