@@ -59,6 +59,9 @@ class CSVRowElement(CSVAbstractElement):
                 if self.required:
                     return self._add_na_value(components, data, labels)
             else:
+                for tf in self.transform_funcs:
+                    value = tf(value)
+
                 data.append(InstanceElement(value=value, datatype=self.data_type))
                 components.append(self.component)
                 labels.append(self.label)
@@ -184,7 +187,7 @@ class CSVLoader:
         if connection is not None:
             try:
                 action_obj = connection.create(mapping.action)
-            except Exceptoin as e:
+            except Exception as e:
                 raise LoaderError(CSVLoader, "Failed to create required action: '{0}'".format(mapping.action.name))
 
         topology_map = {}

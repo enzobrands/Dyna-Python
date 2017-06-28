@@ -7,19 +7,22 @@ import json
 import dateutil.parser
 
 class InActionQueryValue:
-    def __init__(self, value=None, datatype=None, textsearch=False):
+    def __init__(self, value=None, datatype=None, textsearch=False, position=None):
         if type(value) == DataElement:
             self.dataelement = value
         else:
             self.dataelement = DataElement(value=value, datatype=datatype)
         self.textsearch = textsearch
+        self.position = position
 
     @staticmethod
     def from_dict(dct):
         val = None
         try:
             de = DataElement.from_dict(dct)
-            val = InActionQueryValue(value=de, textsearch=get(dct, 'textsearch', false))
+            val = InActionQueryValue(value=de,
+                                     textsearch=get(dct, 'textsearch', false),
+                                     position=get(dct, 'position', None))
         except Exception as e:
             raise DeserializationError(InstanceElement, 'dict', dct) from e
         return val
@@ -29,6 +32,8 @@ class InActionQueryValue:
         try:
             dct = self.dataelement.to_dict()
             dct['textsearch'] = self.textsearch
+            if not self.position is None:
+                dct['position'] = self.position
         except Exception as e:
             raise SerializationError(InstanceElement, 'dict') from e
         return dct
