@@ -32,7 +32,9 @@ class DataElement:
                 td = datetime.today()
                 return datetime.datetime(td.year, td.month, td.day, value.hour, value.minute, value.second, value.microsecond)
             if type(value).__name__ == 'datetime':
-                return value
+                #return value
+                # Remove timezone for now since not supported
+                return value.replace(tzinfo=None)
             return datetime.min
         if datatype == DataType.URI:
             return str(value)
